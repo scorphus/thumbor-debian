@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+export PYBUILD_NAME=thumbor
+export PYBUILD_TEST_NOSE=1
+export PYBUILD_BEFORE_TEST=cp -R tests integration_tests {build_dir}; redis-server --port 6668 --requirepass hey_you > /dev/null &
+export PYBUILD_AFTER_TEST=redis-cli -p 6668 -a hey_you shutdown; rm -rf {build_dir}/tests {build_dir}/integration_tests
+export PYBUILD_TEST_ARGS=-s integration_tests/ tests/ --ignore-files=test_statsd_metrics.py --ignore-files=test_sentry.py --ignore-files=test_queued_detector.py --ignore-files=test_distributed_collage.py --exclude=test_convert_svg_already_converted_to_png --exclude=test_convert_not_well_formed_svg_to_png
+export PYBUILD_AFTER_INSTALL=mkdir -p {destdir}/etc/thumbor.d; HOME=/var/lib/thumbor PYTHONPATH={destdir}/usr/lib/python{version}/dist-packages/ python{version} {destdir}/usr/bin/thumbor-config > {destdir}/etc/thumbor.d/10-default.conf; find {destdir}/usr/lib/python{version}/dist-packages/ -name '*.c' -delete
+export LC_ALL=C.UTF-8
+
+%:
+	dh $@ --with python2,systemd --buildsystem=pybuild
+
+override_dh_clean:
+	rm -rf thumbor.egg-info
+	redis-cli -p 6668 -a hey_you shutdown || true
+	dh_clean
+
+override_dh_installinit:
+	dh_installinit --name=thumbor --noscripts

@@ -1,0 +1,51 @@
+Source: thumbor
+Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
+Uploaders: Gilles Dubuc <gilles@wikimedia.org>
+Section: python
+Priority: optional
+Standards-Version: 3.9.8
+Build-Depends: debhelper (>= 9),
+               dh-python,
+               dh-systemd (>= 1.5),
+               ffmpeg,
+               gifsicle,
+               libimage-exiftool-perl,
+               libjpeg-turbo-progs,
+               python-all,
+               python-argparse,
+               python-cairosvg,
+               python-celery,
+               python-colorama,
+               python-concurrent.futures,
+               python-crypto (>= 2.1.0),
+               python-dev,
+               python-derpconf (>= 0.2.0),
+               python-libthumbor,
+               python-mock (>=1.0.1),
+               python-nose,
+               python-numpy,
+               python-opencv,
+               python-pexif (>=0.15),
+               python-pil (>= 3.0.0),
+               python-preggy (>= 1.3.0),
+               python-pyexiv2,
+               python-pyssim,
+               python-redis (>= 2.4.9),
+               python-schedule,
+               python-setuptools,
+               python-statsd (>= 3.0.1),
+               python-tornado (>= 4.1.0),
+               python-tz,
+               python-webcolors,
+               redis-server,
+X-Python-Version: >= 2.7
+Homepage: https://github.com/thumbor/thumbor
+Vcs-Git: https://anonscm.debian.org/git/python-modules/packages/thumbor.git
+Vcs-Browser: https://anonscm.debian.org/cgit/python-modules/packages/thumbor.git
+
+Package: thumbor
+Architecture: any
+Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}, python-argparse, python-cairosvg, python-crypto (>= 2.1.0), python-derpconf (>= 0.2.0), python-concurrent.futures, python-libthumbor, python-pexif (>= 0.15), python-pil (>= 3.0.0), python-schedule, python-statsd (>= 3.0.1), python-tornado (>= 4.1.0), python-tz, python-webcolors
+Description: Photo thumbnail service
+ Thumbor is a smart imaging service. It enables on-demand crop, resizing
+ and flipping of images.

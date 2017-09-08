@@ -1,0 +1,41 @@
+The home directory can't be guessed at that point, the thumbor user future home is a better default
+
+--- a/thumbor/config.py
++++ b/thumbor/config.py
+@@ -8,7 +8,7 @@
+ # http://www.opensource.org/licenses/mit-license
+ # Copyright (c) 2011 globo.com thumbor@googlegroups.com
+ 
+-from os.path import expanduser, join
++from os.path import join
+ import tempfile
+ 
+ import derpconf.config as config
+@@ -16,7 +16,7 @@
+ 
+ from thumbor import __version__
+ 
+-home = expanduser("~")
++home = '/var/lib/thumbor'
+ 
+ Config.define('THUMBOR_LOG_CONFIG', None, 'Logging configuration as json', 'Logging')
+ Config.define(
+--- a/tests/test_config.py
++++ b/tests/test_config.py
+@@ -8,7 +8,6 @@
+ # http://www.opensource.org/licenses/mit-license
+ # Copyright (c) 2011 globo.com thumbor@googlegroups.com
+ 
+-from os.path import expanduser
+ from unittest import TestCase
+ import mock
+ 
+@@ -49,7 +48,7 @@
+             ('GIF_ENGINE', 'thumbor.engines.gif'),
+             ('URL_SIGNER', 'libthumbor.url_signers.base64_hmac_sha1'),
+             ('ALLOW_UNSAFE_URL', True),
+-            ('FILE_LOADER_ROOT_PATH', expanduser("~")),
++            ('FILE_LOADER_ROOT_PATH', '/var/lib/thumbor'),
+             ('STORAGE_EXPIRATION_SECONDS', 60 * 60 * 24 * 30),
+             ('STORES_CRYPTO_KEY_FOR_EACH_IMAGE', False),
+             ('MIXED_STORAGE_FILE_STORAGE', 'thumbor.storages.no_storage'),

@@ -1,0 +1,23 @@
+thumbor (6.3.2+git20170607-1) jessie-wikimedia; urgency=medium
+
+  * Internal upload, use thumbor from git fork afb1c0e
+  * debian/control
+    - add python-schedule dependency
+    - add python-webcolors dependency
+  * debian/rules
+    - exclude broken distributed collage filter test
+    - exclude broken upstream SVG tests: https://github.com/thumbor/thumbor/issues/933
+
+ -- Gilles Dubuc <gilles@wikimedia.org>  Wed, 07 Jun 2017 11:21:16 +0000
+
+thumbor (6.0.1+git20160706-1) jessie-wikimedia; urgency=medium
+
+  * Internal upload, use thumbor from git f813c18be
+
+ -- Filippo Giunchedi <filippo@debian.org>  Thu, 14 Jul 2016 12:52:12 +0100
+
+thumbor (6.0.1-1) unstable; urgency=low
+
+  * Initial release. (Closes: #723778)
+
+ -- Gilles Dubuc <gilles@wikimedia.org>  Wed, 18 May 2016 16:16:36 +0000

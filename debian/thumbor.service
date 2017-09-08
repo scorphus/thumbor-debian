@@ -1,0 +1,12 @@
+[Unit]
+Description=Thumbor image manipulation service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/thumbor -k /etc/thumbor.key -c /etc/thumbor.d/
+User=thumbor
+PrivateTmp=yes
+
+[Install]
+WantedBy=default.target
+
