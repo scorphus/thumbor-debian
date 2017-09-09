@@ -1,0 +1,27 @@
+Thumbor for Debian
+------------------
+
+By default, Thumbor runs on http://localhost:8888
+
+Generate valid URLs:
+
+    thumbor-url https://www.debian.org/Pics/softwaves.png -k $(cat /etc/thumbor.key)
+
+Logs:
+
+    journalctl -u thumbor
+
+Debug:
+    
+    system thumbor stop
+
+    /usr/bin/python /usr/bin/thumbor -k /etc/thumbor.key -c /etc/thumbor.d/ -l debug
+
+
+You will find more info at https://thumbor.readthedocs.io
+
+
+ -- Marcelo Jorge Vieira <metal@debian.org>  Sat, 09 Sep 2017 01:29:12 -0300
+
+
+
