@@ -1,3 +1,12 @@
+thumbor (6.3.2-2) unstable; urgency=medium
+
+  * Fixed some thumbor tests (Patch already applied by upstream)
+  * debian/copyright: Added missing licenses
+  * Lintian fixes:
+    - build-depends: dh-systemd (>= 1.5) => use debhelper (>= 9.20160709)
+
+ -- Marcelo Jorge Vieira <metal@debian.org>  Thu, 23 Nov 2017 23:21:56 -0200
+
 thumbor (6.3.2-1) unstable; urgency=low
 
   [ Gilles Dubuc ]
