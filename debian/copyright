@@ -18,9 +18,62 @@ Files: thumbor/filters/haarcascade_eye.xml
 Copyright: 2000 Intel Corporation
 License: Intel-Open-Source-License
 
+Files: thumbor/ext/filters/lib/wavelet_sharpen.c
+Copyright: Marco Rossini
+License: GPL-2+
+
 Files: thumbor/engines/extensions/pil.py
 Copyright: 2012 Almar Klein, Ant1, Marius van Voorden
 License: BSD-3-clause
+
+Files: tests/fixtures/filters/source.jpg
+Copyright: Victor Grigas
+License: CC-BY-SA-3.0
+
+Files: tests/fixtures/filters/watermark.svg
+       tests/fixtures/filters/watermark.png
+Copyright: Zachary "Zach" Harden
+License: public-domain
+ This file is ineligible for copyright and therefore in the public domain
+ because it consists entirely of information that is common property and
+ contains no original authorship.
+ More info at: https://commons.wikimedia.org/wiki/File:Wikimedia-logo.svg
+
+Files: tests/fixtures/filters/800px-Guido-portrait-2014.jpg
+Copyright: Daniel Stroud
+License: CC-BY-SA-4.0
+
+Files: tests/fixtures/filters/800px-Coffee_berries_1.jpg
+Copyright: Stanislaw Szydlo
+License: CC-BY-SA-3.0
+
+Files: tests/fixtures/filters/800px-A_small_cup_of_coffee.JPG
+Copyright: Julius Schorzman
+License: CC-BY-SA-2.0
+
+Files: tests/fixtures/filters/513px-Coffee_beans_-_ziarna_kawy.jpg
+Copyright: Alina Zienowicz (Ala z)
+License: CC-BY-SA-3.0
+
+Files: tests/fixtures/filters/PNG_transparency_demonstration_1.png
+Copyright: Ed g2s
+License: CC-BY-SA-3.0
+
+Files: tests/fixtures/images/Christophe_Henner_-_June_2016.jpg
+Copyright: Ruby Mizrahi / Wikimedia Foundation
+License: CC-BY-SA-3.0
+
+Files: tests/fixtures/images/Giunchedi%2C_Filippo_January_2015_01.jpg
+Copyright: Myleen Hollero / Wikimedia Foundation
+License: CC-BY-SA-3.0
+
+Files: tests/fixtures/images/Commons-logo.svg
+Copyright: Wikimedia Foundation
+License: CC-BY-SA-3.0
+
+Files: tests/fixtures/images/10_years_of_Wikipedia_by_Guillaume_Paumier.jpg
+Copyright: Pierre-Selim Huard
+License: CC-BY-SA-3.0
 
 Files: debian/*
 Copyright: 2014 Globo.com,
@@ -109,3 +162,52 @@ License: BSD-3-clause
  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+License: GPL-2+
+ On Debian GNU/Linux systems, the complete text of the GNU General
+ Public License can be found in `/usr/share/common-licenses/GPL-2'.
+
+License: CC-BY-SA-2.0
+ You are free:
+ to Share (to copy, distribute and transmit the work) and
+ to Remix (to adapt the work) under the following conditions:
+ .
+ Attribution — You must attribute the work in the manner specified by the
+ author or licensor (but not in any way that suggests that they endorse you
+ or your use of the work).
+ .
+ Share Alike — If you alter, transform, or build upon this work, you may
+ distribute the resulting work only under the same, similar or a compatible
+ license.
+ .
+ For more information, see http://creativecommons.org/licenses/by-sa/2.0/
+
+License: CC-BY-SA-3.0
+ You are free:
+ to Share (to copy, distribute and transmit the work) and
+ to Remix (to adapt the work) under the following conditions:
+ .
+ Attribution — You must attribute the work in the manner specified by the
+ author or licensor (but not in any way that suggests that they endorse you
+ or your use of the work).
+ .
+ Share Alike — If you alter, transform, or build upon this work, you may
+ distribute the resulting work only under the same, similar or a compatible
+ license.
+ .
+ For more information, see http://creativecommons.org/licenses/by-sa/3.0/
+
+License: CC-BY-SA-4.0
+ You are free:
+ to Share (to copy, distribute and transmit the work) and
+ to Remix (to adapt the work) under the following conditions:
+ .
+ Attribution — You must attribute the work in the manner specified by the
+ author or licensor (but not in any way that suggests that they endorse you
+ or your use of the work).
+ .
+ Share Alike — If you alter, transform, or build upon this work, you may
+ distribute the resulting work only under the same, similar or a compatible
+ license.
+ .
+ For more information, see http://creativecommons.org/licenses/by-sa/4.0/
