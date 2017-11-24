@@ -5,9 +5,8 @@ Uploaders: Gilles Dubuc <gilles@wikimedia.org>,
 Section: python
 Priority: optional
 Standards-Version: 4.0.0
-Build-Depends: debhelper (>= 9),
+Build-Depends: debhelper (>= 9.20160709),
                dh-python,
-               dh-systemd (>= 1.5),
                ffmpeg,
                gifsicle,
                libimage-exiftool-perl,
