@@ -1,3 +1,9 @@
+thumbor (6.3.2-3) unstable; urgency=medium
+
+  * debian/copyright: Added complete text of CC licenses
+
+ -- Marcelo Jorge Vieira <metal@debian.org>  Sat, 25 Nov 2017 16:26:52 -0200
+
 thumbor (6.3.2-2) unstable; urgency=medium
 
   * Fixed some thumbor tests (Patch already applied by upstream)
