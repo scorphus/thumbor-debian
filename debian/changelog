@@ -1,3 +1,9 @@
+thumbor (6.3.2-4) unstable; urgency=medium
+
+  * Fixed reorientate tests for big endian machines (Closes: #883038)
+
+ -- Marcelo Jorge Vieira <metal@debian.org>  Mon, 18 Dec 2017 23:06:34 -0200
+
 thumbor (6.3.2-3) unstable; urgency=medium
 
   * debian/copyright: Added complete text of CC licenses
