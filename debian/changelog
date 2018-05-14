@@ -1,6 +1,7 @@
 thumbor (6.3.2-5) UNRELEASED; urgency=medium
 
   * d/control: Set Vcs-* to salsa.debian.org
+  * d/control: Remove ancient X-Python-Version field
 
  -- Ondřej Nový <onovy@debian.org>  Tue, 13 Feb 2018 09:58:50 +0100
 
