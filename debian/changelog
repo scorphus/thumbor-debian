@@ -11,6 +11,7 @@ thumbor (6.5.1-1) UNRELEASED; urgency=medium
   * Removed patches applied by upstream
     * fix_convert_tif_to_png.patch
     * fixed_reorientate_tests_for_big_endian_machines.patch
+  * Replaced 'python-pexif' with 'python-piexif'
 
  -- Marcelo Jorge Vieira <metal@debian.org>  Sun, 17 Jun 2018 23:31:22 -0300
 
