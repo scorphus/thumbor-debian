@@ -8,19 +8,22 @@
 # http://www.opensource.org/licenses/mit-license
 # Copyright (c) 2011 globo.com thumbor@googlegroups.com
 
-from os.path import abspath, join, dirname
-from preggy import expect
-import mock
-from urllib import quote
-# from tornado.concurrent import Future
-import tornado.web
-from tests.base import PythonTestCase, TestCase
-from tornado.concurrent import Future
 import re
+import time
+from os.path import abspath, join, dirname
+
+import mock
+import tornado.web
+from preggy import expect
+from six.moves.urllib.parse import quote
+from tornado.concurrent import Future
+from tornado.httpclient import AsyncHTTPClient
+from tornado.testing import AsyncHTTPTestCase
 
 import thumbor.loaders.http_loader as loader
-from thumbor.context import Context
+from tests.base import PythonTestCase
 from thumbor.config import Config
+from thumbor.context import Context
 from thumbor.loaders import LoaderResult
 
 
@@ -33,9 +36,21 @@ class MainHandler(tornado.web.RequestHandler):
         self.write('Hello')
 
 
+class TimeoutHandler(tornado.web.RequestHandler):
+    def get(self):
+        time.sleep(1.2)
+        self.write('Hello')
+
+
 class EchoUserAgentHandler(tornado.web.RequestHandler):
     def get(self):
         self.write(self.request.headers['User-Agent'])
+
+
+class EchoAllHeadersHandler(tornado.web.RequestHandler):
+    def get(self):
+        for header, value in sorted(self.request.headers.iteritems()):
+            self.write("%s:%s\n" % (header, value))
 
 
 class HandlerMock(object):
@@ -114,7 +129,7 @@ class ValidateUrlTestCase(PythonTestCase):
         config = Config()
         config.ALLOWED_SOURCES = [
             's.glbimg.com',
-            re.compile(r'https:\/\/www\.google\.com/img/.*')
+            re.compile(r'https://www\.google\.com/img/.*')
         ]
         ctx = Context(None, config, None)
         expect(
@@ -165,8 +180,25 @@ class NormalizeUrlTestCase(PythonTestCase):
         expect(result).to_equal(expected)
 
 
-class HttpLoaderTestCase(TestCase):
+class DummyAsyncHttpClientTestCase(AsyncHTTPTestCase):
+    # By default Tornado allows to create one (Async)HttpClient per IOLoop instance
+    # http://www.tornadoweb.org/en/stable/httpclient.html#tornado.httpclient.AsyncHTTPClient
+    # AsyncHTTPTestCase provides a lot of useful code, which starts http server listening with an app running.
+    # But it also constructs AsyncHttpClient, which then by default is getting reused upon next calls to
+    # get new AsyncHttpClient. Some test cases are requiring curl client to be initialized (see http_loader.py)
+    # but, by the time http_loader configures Tornado's AsyncHTTPClient, it's already too late,
+    # since Tornado has http client initialized for given IOLoop.
+    # Forcing new instance here, on test start up time, is ensuring that it won't be treated as singleton
+    # and rather be disposable instance.
+    def get_http_client(self):
+        return AsyncHTTPClient(force_instance=True)
 
+    def tearDown(self):
+        AsyncHTTPClient().close()  # clean up singleton instance
+        super(DummyAsyncHttpClientTestCase, self).tearDown()
+
+
+class HttpLoaderTestCase(DummyAsyncHttpClientTestCase):
     def get_app(self):
         application = tornado.web.Application([
             (r"/", MainHandler),
@@ -215,7 +247,66 @@ class HttpLoaderTestCase(TestCase):
         expect(isinstance(future, Future)).to_be_true()
 
 
-class HttpLoaderWithUserAgentForwardingTestCase(TestCase):
+class HttpLoaderWithHeadersForwardingTestCase(DummyAsyncHttpClientTestCase):
+
+    def get_app(self):
+        application = tornado.web.Application([
+            (r"/", EchoAllHeadersHandler),
+        ])
+
+        return application
+
+    def test_load_with_some_headers(self):
+        url = self.get_url('/')
+        config = Config()
+        config.HTTP_LOADER_FORWARD_HEADERS_WHITELIST = ["X-Server"]
+        handler_mock_options = {
+            "Accept-Encoding": "gzip",
+            "User-Agent": "Thumbor",
+            "Host": "localhost",
+            "Accept": "*/*",
+            "X-Server": "thumbor"
+        }
+        ctx = Context(None, config, None, HandlerMock(handler_mock_options))
+
+        loader.load(ctx, url, self.stop)
+        result = self.wait()
+        expect(result).to_be_instance_of(LoaderResult)
+        expect(result.buffer).to_include("X-Server:thumbor")
+
+    def test_load_with_some_excluded_headers(self):
+        url = self.get_url('/')
+        config = Config()
+        handler_mock_options = {
+            "Accept-Encoding": "gzip",
+            "User-Agent": "Thumbor",
+            "Host": "localhost",
+            "Accept": "*/*",
+            "X-Server": "thumbor"
+        }
+        ctx = Context(None, config, None, HandlerMock(handler_mock_options))
+
+        loader.load(ctx, url, self.stop)
+        result = self.wait()
+        expect(result).to_be_instance_of(LoaderResult)
+        expect(result.buffer).Not.to_include("X-Server:thumbor")
+
+    def test_load_with_all_headers(self):
+        url = self.get_url('/')
+        config = Config()
+        config.HTTP_LOADER_FORWARD_ALL_HEADERS = True
+        handler_mock_options = {"X-Test": "123", "DNT": "1", "X-Server": "thumbor"}
+        ctx = Context(None, config, None, HandlerMock(handler_mock_options))
+
+        loader.load(ctx, url, self.stop)
+        result = self.wait()
+        expect(result).to_be_instance_of(LoaderResult)
+        expect(result.buffer).to_include("Dnt:1\n")
+        expect(result.buffer).to_include("X-Server:thumbor\n")
+        expect(result.buffer).to_include("X-Test:123\n")
+
+
+class HttpLoaderWithUserAgentForwardingTestCase(DummyAsyncHttpClientTestCase):
 
     def get_app(self):
         application = tornado.web.Application([
@@ -246,3 +337,63 @@ class HttpLoaderWithUserAgentForwardingTestCase(TestCase):
         result = self.wait()
         expect(result).to_be_instance_of(LoaderResult)
         expect(result.buffer).to_equal('DEFAULT_USER_AGENT')
+
+
+class HttpCurlTimeoutLoaderTestCase(DummyAsyncHttpClientTestCase):
+
+    def get_app(self):
+        application = tornado.web.Application([
+            (r"/", TimeoutHandler),
+        ])
+
+        return application
+
+    def test_load_with_timeout(self):
+        url = self.get_url('/')
+        config = Config()
+        config.HTTP_LOADER_CURL_ASYNC_HTTP_CLIENT = True
+        config.HTTP_LOADER_REQUEST_TIMEOUT = 1
+        ctx = Context(None, config, None)
+
+        loader.load(ctx, url, self.stop)
+        result = self.wait()
+        expect(result).to_be_instance_of(LoaderResult)
+        expect(result.buffer).to_be_null()
+        expect(result.successful).to_be_false()
+
+    def test_load_with_speed_timeout(self):
+        url = self.get_url('/')
+        config = Config()
+        config.HTTP_LOADER_CURL_ASYNC_HTTP_CLIENT = True
+        config.HTTP_LOADER_CURL_LOW_SPEED_TIME = 1
+        config.HTTP_LOADER_CURL_LOW_SPEED_LIMIT = 1000000000000
+        ctx = Context(None, config, None)
+
+        loader.load(ctx, url, self.stop)
+        result = self.wait()
+        expect(result).to_be_instance_of(LoaderResult)
+        expect(result.buffer).to_be_null()
+        expect(result.successful).to_be_false()
+
+
+class HttpTimeoutLoaderTestCase(DummyAsyncHttpClientTestCase):
+
+    def get_app(self):
+        application = tornado.web.Application([
+            (r"/", TimeoutHandler),
+        ])
+
+        return application
+
+    def test_load_without_curl_but_speed_timeout(self):
+        url = self.get_url('/')
+        config = Config()
+        config.HTTP_LOADER_CURL_LOW_SPEED_TIME = 1
+        config.HTTP_LOADER_CURL_LOW_SPEED_LIMIT = 1000000000000
+        ctx = Context(None, config, None)
+
+        loader.load(ctx, url, self.stop)
+        result = self.wait()
+        expect(result).to_be_instance_of(LoaderResult)
+        expect(result.buffer).to_equal('Hello')
+        expect(result.successful).to_be_true()

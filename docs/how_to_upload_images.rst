@@ -39,7 +39,7 @@ configuration in your thumbor.conf file to ``True``.
 
 Thumbor will then use the storage specified in the
 ``UPLOAD_PHOTO_STORAGE`` configuration to save your images. You can use
-an existing storage (filesytem, redis, mongo, hbase...) or
+an existing storage (filesystem, redis, mongo, hbase...) or
 :doc:`create your own storage <create_my_own_storage>` if needed .
 
 You can manage image putting and deletions simply set the configuration
@@ -58,7 +58,7 @@ The Thumbor ``/image`` REST end-point supports the commons `HTTP
 methods <http://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol>`__ :
 \* POST : to upload a new image \* GET : to display an image uploaded \*
 PUT : to replace an image uploaded by another preserving the URI \*
-DELETE : to remove an image uploded from storage
+DELETE : to remove an image uploaded from storage
 
 By default, ``PUT`` and ``DELETE`` methods are disabled as explained
 above. This is done to tighten thumbor's security.
@@ -68,13 +68,12 @@ Posting
 
 --------------
 
-Posting is the only allowed by default method when you activate the
+Posting is the only method allowed by default when you activate the
 upload module. It allows new images to be sent to Thumbor.
 
-In order to upload a new image, you have two choices : \* send an HTTP
-**POST** to the ``/image`` end-point with the image as payload (REST
-style) \* send an HTTP **POST** to the ``/image`` end-point with a
-multi-part form with a file field called media (Form style).
+In order to upload a new image, you have two choices:
+ * send an HTTP **POST** to the ``/image`` end-point with the image as payload (REST style)
+ * send an HTTP **POST** to the ``/image`` end-point with a multi-part form with a file field called media (Form style).
 
 In the REST style mode you may add an optional ``Slug`` header to define
 the image filename, which is useful for SEO reasons. Not specifying a
@@ -82,8 +81,10 @@ the image filename, which is useful for SEO reasons. Not specifying a
 (``UPLOAD_DEFAULT_FILENAME`` parameter) .
 
 The HTTP response will return a ``Location`` header pointing on the
-uploaded image. The URI presents in ``Location`` header may be used to
+uploaded image. The URI presented in ``Location`` header may be used to
 update or delete the image uploaded (see below).
+
+For examples, see the `Upload an image via the REST API`_ or `Upload an image via a form`_ sections.
 
  HTTP status code
 ^^^^^^^^^^^^^^^^^
@@ -117,6 +118,8 @@ The HTTP response will return a ``Location`` header pointing on the
 modified image. The URI presents in ``Location`` header may be used to
 update again the image or delete it.
 
+For an example see the `Modifying an image`_ section.
+
 HTTP status code
 ^^^^^^^^^^^^^^^^
 
@@ -138,6 +141,8 @@ Deleting can be very dangerous, thus is disabled by default.
 If you do enable it, in order to delete an image, all you have to do is
 send an HTTP **DELETE** request to the ``/image`` end-point.
 
+For an example, see the `Deleting an image`_ section.
+
 HTTP status code
 ^^^^^^^^^^^^^^^^
 
@@ -146,7 +151,7 @@ HTTP status code
 -  405 Method Not Allowed (if thumbor's configuration disallows deleting
    images)
 
-Example :
+Example
 ---------
 
 Assuming the thumbor server is located at : ``http://thumbor-server``

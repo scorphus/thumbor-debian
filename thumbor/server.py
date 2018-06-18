@@ -11,6 +11,7 @@
 import sys
 import logging
 import logging.config
+import warnings
 
 import os
 import socket
@@ -25,6 +26,13 @@ from thumbor.importer import Importer
 from thumbor.context import Context
 from thumbor.utils import which
 
+from PIL import Image
+
+try:
+    basestring
+except NameError:
+    basestring = str
+
 
 def get_as_integer(value):
     try:
@@ -33,7 +41,10 @@ def get_as_integer(value):
         return None
 
 
-def get_config(config_path):
+def get_config(config_path, use_environment=False):
+    if use_environment:
+        Config.allow_environment_variables()
+
     lookup_paths = [os.curdir,
                     expanduser('~'),
                     '/etc/',
@@ -71,6 +82,10 @@ def validate_config(config, server_parameters):
         raise RuntimeError(
             'No security key was found for this instance of thumbor. ' +
             'Please provide one using the conf file or a security key file.')
+
+    if config.ENGINE or config.USE_GIFSICLE_ENGINE:
+        # Error on Image.open when image pixel count is above MAX_IMAGE_PIXELS
+        warnings.simplefilter('error', Image.DecompressionBombWarning)
 
     if config.USE_GIFSICLE_ENGINE:
         server_parameters.gifsicle_path = which('gifsicle')
@@ -118,12 +133,12 @@ def main(arguments=None):
         arguments = sys.argv[1:]
 
     server_parameters = get_server_parameters(arguments)
-    config = get_config(server_parameters.config_path)
+    config = get_config(server_parameters.config_path, server_parameters.use_environment)
     configure_log(config, server_parameters.log_level.upper())
 
-    importer = get_importer(config)
-
     validate_config(config, server_parameters)
+
+    importer = get_importer(config)
 
     with get_context(server_parameters, config, importer) as context:
         application = get_application(context)
@@ -138,4 +153,4 @@ def main(arguments=None):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main(sys.argv[1:])

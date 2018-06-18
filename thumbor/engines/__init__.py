@@ -8,12 +8,12 @@
 # http://www.opensource.org/licenses/mit-license
 # Copyright (c) 2011 globo.com thumbor@googlegroups.com
 
-from pexif import ExifSegment
+import piexif
 from xml.etree.ElementTree import ParseError
 
 try:
     import cairosvg
-except:
+except ImportError:
     cairosvg = None
 
 try:
@@ -127,8 +127,7 @@ class BaseEngine(object):
         setattr(self, 'read', multiple_engine.read)
 
     def is_multiple(self):
-        return hasattr(self, 'multiple_engine') \
-               and self.multiple_engine is not None
+        return hasattr(self, 'multiple_engine') and self.multiple_engine is not None
 
     def frame_engines(self):
         return self.multiple_engine.frame_engines
@@ -198,8 +197,7 @@ class BaseEngine(object):
         return self.image.size
 
     def can_convert_to_webp(self):
-        return self.size[0] <= WEBP_SIDE_LIMIT \
-               and self.size[1] <= WEBP_SIDE_LIMIT
+        return self.size[0] <= WEBP_SIDE_LIMIT and self.size[1] <= WEBP_SIDE_LIMIT
 
     def normalize(self):
         width, height = self.size
@@ -212,12 +210,14 @@ class BaseEngine(object):
             height_diff = height - self.context.config.MAX_HEIGHT
             if self.context.config.MAX_WIDTH and width_diff > height_diff:
                 height = self.get_proportional_height(
-                        self.context.config.MAX_WIDTH)
+                    self.context.config.MAX_WIDTH
+                )
                 self.resize(self.context.config.MAX_WIDTH, height)
                 return True
             elif self.context.config.MAX_HEIGHT and height_diff > width_diff:
                 width = self.get_proportional_width(
-                        self.context.config.MAX_HEIGHT)
+                    self.context.config.MAX_HEIGHT
+                )
                 self.resize(width, self.context.config.MAX_HEIGHT)
                 return True
 
@@ -236,11 +236,11 @@ class BaseEngine(object):
             return None
 
         try:
-            segment = ExifSegment(None, None, self.exif, 'ro')
+            exif_dict = piexif.load(self.exif)
         except Exception:
             logger.exception('Ignored error handling exif for reorientation')
         else:
-            return segment
+            return exif_dict
         return None
 
     def get_orientation(self):
@@ -251,11 +251,9 @@ class BaseEngine(object):
         :return: Orientation value (1 - 8)
         :rtype: int or None
         """
-        segment = self._get_exif_segment()
-        if segment:
-            orientation = segment.primary['Orientation']
-            if orientation:
-                return orientation[0]
+        exif_dict = self._get_exif_segment()
+        if exif_dict and piexif.ImageIFD.Orientation in exif_dict["0th"]:
+            return exif_dict["0th"][piexif.ImageIFD.Orientation]
         return None
 
     def reorientate(self, override_exif=True):
@@ -291,21 +289,25 @@ class BaseEngine(object):
             self.rotate(90)
 
         if orientation != 1 and override_exif:
-            segment = self._get_exif_segment()
-            if segment and segment.get_primary():
-                segment.primary['Orientation'] = [1]
-                self.exif = segment.get_data()
+            exif_dict = self._get_exif_segment()
+            if exif_dict and piexif.ImageIFD.Orientation in exif_dict["0th"]:
+                exif_dict["0th"][piexif.ImageIFD.Orientation] = 1
+                try:
+                    self.exif = piexif.dump(exif_dict)
+                except Exception as e:
+                    msg = """[piexif] %s""" % e
+                    logger.error(msg)
 
-    def gen_image(self):
+    def gen_image(self, size, color):
         raise NotImplementedError()
 
-    def create_image(self):
+    def create_image(self, buffer):
         raise NotImplementedError()
 
-    def crop(self):
+    def crop(self, left, top, right, bottom):
         raise NotImplementedError()
 
-    def resize(self):
+    def resize(self, width, height):
         raise NotImplementedError()
 
     def focus(self, points):
@@ -317,13 +319,16 @@ class BaseEngine(object):
     def flip_vertically(self):
         raise NotImplementedError()
 
-    def rotate(self, amount):
+    def rotate(self, degrees):
         """
         Rotates the image the given amount CCW.
-        :param amount: Amount to rotate in degrees.
+        :param degrees: Amount to rotate in degrees.
         :type amount: int
         """
         pass
+
+    def read_multiple(self, images, extension=None):
+        raise NotImplementedError()
 
     def read(self, extension, quality):
         raise NotImplementedError()
@@ -339,7 +344,7 @@ class BaseEngine(object):
             BRG, BGR, RGBA, AGBR, ...  """
         raise NotImplementedError()
 
-    def paste(self):
+    def paste(self, other_engine, pos, merge=True):
         raise NotImplementedError()
 
     def enable_alpha(self):
@@ -348,11 +353,32 @@ class BaseEngine(object):
     def image_data_as_rgb(self, update_image=True):
         raise NotImplementedError()
 
+    def strip_exif(self):
+        pass
+
+    def convert_to_grayscale(self, update_image=True, alpha=True):
+        raise NotImplementedError()
+
+    def draw_rectangle(self, x, y, width, height):
+        raise NotImplementedError()
+
     def strip_icc(self):
         pass
 
     def extract_cover(self):
         raise NotImplementedError()
 
+    def has_transparency(self):
+        raise NotImplementedError()
+
     def cleanup(self):
         pass
+
+    def can_auto_convert_png_to_jpg(self, *args, **kwargs):
+        can_convert = (self.context.config.AUTO_PNG_TO_JPG and
+                       self.context.request.engine.extension == '.png')
+
+        if can_convert and not self.has_transparency():
+            return True
+
+        return False

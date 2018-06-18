@@ -8,7 +8,7 @@
 # http://www.opensource.org/licenses/mit-license
 # Copyright (c) 2011 globo.com thumbor@googlegroups.com
 
-import warnings
+
 import os
 from tempfile import mkstemp
 from subprocess import Popen, PIPE
@@ -16,21 +16,16 @@ from io import BytesIO
 
 from PIL import Image, ImageFile, ImageDraw, ImageSequence, JpegImagePlugin
 
-try:
-    from cv2 import cv
-except:
-    cv = None
-
 from thumbor.engines import BaseEngine
 from thumbor.engines.extensions.pil import GifWriter
-from thumbor.utils import logger, deprecated, EXTENSION
+from thumbor.utils import logger, deprecated
 
 try:
     from thumbor.ext.filters import _composite
+
     FILTERS_AVAILABLE = True
 except ImportError:
     FILTERS_AVAILABLE = False
-
 
 FORMATS = {
     '.tif': 'PNG',  # serve tif as png
@@ -44,8 +39,9 @@ FORMATS = {
 ImageFile.MAXBLOCK = 2 ** 25
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-if hasattr(ImageFile, 'IGNORE_DECODING_ERRORS'):
-    ImageFile.IGNORE_DECODING_ERRORS = True
+DecompressionBombExceptions = (Image.DecompressionBombWarning,)
+if hasattr(Image, 'DecompressionBombError'):
+    DecompressionBombExceptions += (Image.DecompressionBombError,)
 
 
 class Engine(BaseEngine):
@@ -53,11 +49,13 @@ class Engine(BaseEngine):
         super(Engine, self).__init__(context)
         self.subsampling = None
         self.qtables = None
+        self.original_mode = None
 
-        if self.context and self.context.config.MAX_PIXELS:
-            Image.MAX_IMAGE_PIXELS = self.context.config.MAX_PIXELS
-        # Error on Image.open when image pixel count is above MAX_IMAGE_PIXELS
-        warnings.simplefilter('error', Image.DecompressionBombWarning)
+        try:
+            if self.context.config.MAX_PIXELS is None or int(self.context.config.MAX_PIXELS):
+                Image.MAX_IMAGE_PIXELS = self.context.config.MAX_PIXELS
+        except (AttributeError, TypeError, ValueError):  # invalid type
+            logger.info('MAX_PIXELS config variable set to invalid type. Has to be int on None')
 
     def gen_image(self, size, color):
         if color == 'transparent':
@@ -68,12 +66,12 @@ class Engine(BaseEngine):
     def create_image(self, buffer):
         try:
             img = Image.open(BytesIO(buffer))
-        except Image.DecompressionBombWarning as e:
+        except DecompressionBombExceptions as e:
             logger.warning("[PILEngine] create_image failed: {0}".format(e))
             return None
         self.icc_profile = img.info.get('icc_profile')
-        self.transparency = img.info.get('transparency')
         self.exif = img.info.get('exif')
+        self.original_mode = img.mode
 
         self.subsampling = JpegImagePlugin.get_sampling(img)
         if (self.subsampling == -1):  # n/a for this file
@@ -119,19 +117,22 @@ class Engine(BaseEngine):
     def resize(self, width, height):
         # Indexed color modes (such as 1 and P) will be forced to use a
         # nearest neighbor resampling algorithm. So we convert them to
-        # RGBA mode before resizing to avoid nasty scaling artifacts.
-        original_mode = self.image.mode
+        # RGB(A) mode before resizing to avoid nasty scaling artifacts.
         if self.image.mode in ['1', 'P']:
-            logger.debug('converting image from 8-bit/1-bit palette to 32-bit RGBA for resize')
-            self.image = self.image.convert('RGBA')
+            logger.debug('converting image from 8-bit/1-bit palette to 32-bit RGB(A) for resize')
+            if self.image.mode == '1':
+                target_mode = 'RGB'
+            else:
+                # convert() figures out RGB or RGBA based on palette used
+                target_mode = None
+            self.image = self.image.convert(mode=target_mode)
+
+        size = (int(width), int(height))
+        # Tell image loader what target size we want (only JPG for a moment)
+        self.image.draft(None, size)
 
         resample = self.get_resize_filter()
-        self.image = self.image.resize((int(width), int(height)), resample)
-
-        # 1 and P mode images will be much smaller if converted back to
-        # their original mode. So let's do that after resizing. Get $$.
-        if original_mode != self.image.mode:
-            self.image = self.image.convert(original_mode)
+        self.image = self.image.resize(size, resample)
 
     def crop(self, left, top, right, bottom):
         self.image = self.image.crop((
@@ -167,8 +168,33 @@ class Engine(BaseEngine):
 
     def read(self, extension=None, quality=None):  # NOQA
         # returns image buffer in byte format.
+
         img_buffer = BytesIO()
-        ext = extension or self.extension or self.get_default_extension()
+        requested_extension = extension or self.extension
+
+        # 1 and P mode images will be much smaller if converted back to
+        # their original mode. So let's do that after resizing. Get $$.
+        if self.context.config.PILLOW_PRESERVE_INDEXED_MODE and requested_extension in [None, '.png', '.gif'] \
+                and self.original_mode in ['P', '1'] and self.original_mode != self.image.mode:
+            if self.original_mode == '1':
+                self.image = self.image.convert('1')
+            else:
+                # libimagequant might not be enabled on compile time
+                # but it's better than default octree for RGBA images, so worth a try
+                quantize_default = True
+                try:
+                    # Option available since Pillow 3.3.0
+                    if hasattr(Image, 'LIBIMAGEQUANT'):
+                        self.image = self.image.quantize(method=Image.LIBIMAGEQUANT)
+                        quantize_default = False
+                except ValueError as ex:
+                    if 'dependency' not in str(ex).lower():
+                        raise
+
+                if quantize_default:
+                    self.image = self.image.quantize()
+
+        ext = requested_extension or self.get_default_extension()
 
         options = {
             'quality': quality
@@ -216,9 +242,6 @@ class Engine(BaseEngine):
             if self.exif is not None:
                 options['exif'] = self.exif
 
-        if self.image.mode == 'P' and self.transparency:
-            options['transparency'] = self.transparency
-
         try:
             if ext == '.webp':
                 if self.image.mode not in ['RGB', 'RGBA']:
@@ -230,6 +253,7 @@ class Engine(BaseEngine):
 
             if ext in ['.png', '.gif'] and self.image.mode == 'CMYK':
                 self.image = self.image.convert('RGBA')
+
             self.image.format = FORMATS.get(ext, FORMATS[self.get_default_extension()])
             self.image.save(img_buffer, self.image.format, **options)
         except IOError:
@@ -288,37 +312,6 @@ class Engine(BaseEngine):
 
         return results
 
-    def convert_tif_to_png(self, buffer):
-        if not cv:
-            msg = """[PILEngine] convert_tif_to_png failed: opencv not imported"""
-            logger.error(msg)
-            return buffer
-
-        # can not use cv2 here, because ubuntu precise shipped with python-opencv 2.3 which has bug with imencode
-        # requires 3rd parameter buf which could not be created in python. Could be replaced with these lines:
-        # img = cv2.imdecode(numpy.fromstring(buffer, dtype='uint16'), -1)
-        # buffer = cv2.imencode('.png', img)[1].tostring()
-        mat_data = cv.CreateMatHeader(1, len(buffer), cv.CV_8UC1)
-        cv.SetData(mat_data, buffer, len(buffer))
-        img = cv.DecodeImage(mat_data, -1)
-        buffer = cv.EncodeImage(".png", img).tostring()
-
-        mime = self.get_mimetype(buffer)
-        self.extension = EXTENSION.get(mime, '.jpg')
-        return buffer
-
-    def load(self, buffer, extension):
-        self.extension = extension
-
-        if extension is None:
-            mime = self.get_mimetype(buffer)
-            self.extension = EXTENSION.get(mime, '.jpg')
-
-        if self.extension == '.tif':  # Pillow does not support 16bit per channel TIFF images
-            buffer = self.convert_tif_to_png(buffer)
-
-        super(Engine, self).load(buffer, self.extension)
-
     @deprecated("Use image_data_as_rgb instead.")
     def get_image_data(self):
         return self.image.tobytes()
@@ -350,6 +343,14 @@ class Engine(BaseEngine):
             self.image = image
         return image
 
+    def has_transparency(self):
+        has_transparency = 'A' in self.image.mode or 'transparency' in self.image.info
+        if has_transparency:
+            # If the image has alpha channel,
+            # we check for any pixels that are not opaque (255)
+            has_transparency = min(self.image.convert('RGBA').getchannel('A').getextrema()) < 255
+        return has_transparency
+
     def paste(self, other_engine, pos, merge=True):
         if merge and not FILTERS_AVAILABLE:
             raise RuntimeError(
@@ -380,3 +381,6 @@ class Engine(BaseEngine):
 
     def strip_icc(self):
         self.icc_profile = None
+
+    def strip_exif(self):
+        self.exif = None

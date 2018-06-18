@@ -10,7 +10,8 @@
 
 import sys
 import optparse
-from urllib import quote
+
+from six.moves.urllib.parse import quote
 
 from thumbor import __version__
 from libthumbor import CryptoURL
@@ -165,7 +166,7 @@ def main(arguments=None):
 
     try:
         config = Config.load(None)
-    except:
+    except Exception:
         config = None
 
     if not parsed_options.key and not config:

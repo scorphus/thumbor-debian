@@ -8,7 +8,6 @@
 # http://www.opensource.org/licenses/mit-license
 # Copyright (c) 2011 globo.com thumbor@googlegroups.com
 
-from urllib import quote
 import tempfile
 import shutil
 from os.path import abspath, join, dirname
@@ -19,18 +18,21 @@ import subprocess
 from json import loads
 
 import tornado.web
+from tornado.concurrent import return_future
 from preggy import expect
 from mock import Mock, patch
-import unittest
+from six.moves.urllib.parse import quote
 
 from thumbor.config import Config
 from thumbor.importer import Importer
 from thumbor.context import Context, ServerParameters, RequestParameters
 from thumbor.handlers import FetchResult, BaseHandler
+from thumbor.loaders import LoaderResult
 from thumbor.result_storages.file_storage import Storage as FileResultStorage
 from thumbor.storages.file_storage import Storage as FileStorage
 from thumbor.storages.no_storage import Storage as NoStorage
 from thumbor.utils import which
+from thumbor.server import validate_config
 from tests.base import TestCase, PythonTestCase, normalize_unicode_path
 from thumbor.engines.pil import Engine
 from libthumbor import CryptoURL
@@ -392,6 +394,136 @@ class ImageOperationsWithStoredKeysTestCase(BaseImagingTestCase):
         expect(response.body).to_be_similar_to(default_image())
 
 
+class ImageOperationsWithAutoPngToJpgTestCase(BaseImagingTestCase):
+    def get_config(self):
+        cfg = Config(SECURITY_KEY='ACME-SEC')
+        cfg.LOADER = "thumbor.loaders.file_loader"
+        cfg.FILE_LOADER_ROOT_PATH = self.loader_path
+        cfg.STORAGE = "thumbor.storages.no_storage"
+        cfg.AUTO_PNG_TO_JPG = True
+        cfg.RESULT_STORAGE = 'thumbor.result_storages.file_storage'
+        cfg.RESULT_STORAGE_EXPIRATION_SECONDS = 60
+        cfg.RESULT_STORAGE_FILE_STORAGE_ROOT_PATH = self.root_path
+        return cfg
+
+    def get_importer(self):
+        importer = Importer(self.config)
+        importer.import_modules()
+        return importer
+
+    def get_server(self):
+        server = ServerParameters(8889, 'localhost', 'thumbor.conf', None, 'info', None)
+        server.security_key = 'ACME-SEC'
+        return server
+
+    def get_request(self, *args, **kwargs):
+        return RequestParameters(*args, **kwargs)
+
+    def get_context(self, *args, **kwargs):
+        ctx = super(ImageOperationsWithAutoPngToJpgTestCase, self).get_context(*args, **kwargs)
+        ctx.request = self.get_request()
+        return ctx
+
+    def get_as_webp(self, url):
+        return self.fetch(url, headers={
+            "Accept": 'image/webp,*/*;q=0.8'
+        })
+
+    @patch('thumbor.handlers.Context')
+    def test_should_auto_convert_png_to_jpg(self, context_mock):
+        context_mock.return_value = self.context
+        response = self.fetch('/unsafe/Giunchedi%2C_Filippo_January_2015_01.png')
+        expect(response.code).to_equal(200)
+        expect(response.headers).not_to_include('Vary')
+        expect(response.body).to_be_jpeg()
+
+    @patch('thumbor.handlers.Context')
+    def test_should_auto_convert_png_to_jpg_with_signed_images(self, context_mock):
+        context_mock.return_value = self.context
+        crypto = CryptoURL('ACME-SEC')
+        url = crypto.generate(image_url="Giunchedi%2C_Filippo_January_2015_01.png")
+        self.context.request = self.get_request(url=url)
+
+        context_mock.return_value = self.context
+        response = self.fetch(url)
+        expect(response.code).to_equal(200)
+        expect(response.headers).not_to_include('Vary')
+        expect(response.body).to_be_jpeg()
+
+    @patch('thumbor.handlers.Context')
+    def test_shouldnt_auto_convert_png_to_jpg_if_png_has_transparency(self, context_mock):
+        context_mock.return_value = self.context
+        self.context.request = self.get_request()
+
+        response = self.fetch('/unsafe/watermark.png')
+        expect(response.code).to_equal(200)
+        expect(response.headers).not_to_include('Vary')
+        expect(response.body).to_be_png()
+
+    @patch('thumbor.handlers.Context')
+    def test_shouldnt_auto_convert_png_to_jpg_if_png_has_transparency_with_signed_images(self, context_mock):
+        context_mock.return_value = self.context
+        crypto = CryptoURL('ACME-SEC')
+        url = crypto.generate(image_url="watermark.png")
+        self.context.request = self.get_request(url=url)
+
+        # save on result storage
+        response = self.fetch(url)
+        expect(response.code).to_equal(200)
+        expect(response.headers).not_to_include('Vary')
+        expect(response.body).to_be_png()
+
+    @patch('thumbor.handlers.Context')
+    def test_should_auto_convert_png_to_webp_if_auto_webp_is_true(self, context_mock):
+        self.config.AUTO_WEBP = True
+        context_mock.return_value = self.context
+        self.context.request = self.get_request()
+
+        response = self.get_as_webp('/unsafe/Giunchedi%2C_Filippo_January_2015_01.png')
+        expect(response.code).to_equal(200)
+        expect(response.headers).to_include('Vary')
+        expect(response.body).to_be_webp()
+
+    @patch('thumbor.handlers.Context')
+    def test_should_auto_convert_png_to_webp_if_auto_webp_is_true_with_signed_images(self, context_mock):
+        self.config.AUTO_WEBP = True
+        context_mock.return_value = self.context
+        crypto = CryptoURL('ACME-SEC')
+        url = crypto.generate(image_url="Giunchedi%2C_Filippo_January_2015_01.png")
+        self.context.request = self.get_request(url=url, accepts_webp=True)
+
+        # save on result storage
+        response = self.get_as_webp(url)
+        expect(response.code).to_equal(200)
+        expect(response.headers).to_include('Vary')
+        expect(response.body).to_be_webp()
+
+    @patch('thumbor.handlers.Context')
+    def test_should_auto_convert_png_to_webp_if_auto_webp_is_true_and_png_has_transparency(self, context_mock):
+        self.config.AUTO_WEBP = True
+        context_mock.return_value = self.context
+        self.context.request = self.get_request()
+
+        response = self.get_as_webp('/unsafe/watermark.png')
+        expect(response.code).to_equal(200)
+        expect(response.headers).to_include('Vary')
+        expect(response.body).to_be_webp()
+
+    @patch('thumbor.handlers.Context')
+    def test_should_auto_convert_png_to_webp_if_auto_webp_is_true_and_png_has_transparency_with_signed_images(self, context_mock):
+        self.config.AUTO_WEBP = True
+        context_mock.return_value = self.context
+        crypto = CryptoURL('ACME-SEC')
+        url = crypto.generate(image_url="watermark.png")
+        self.context.request = self.get_request(url=url)
+
+        # save on result storage
+        response = self.get_as_webp(url)
+        expect(response.code).to_equal(200)
+        expect(response.headers).to_include('Vary')
+        expect(response.body).to_be_webp()
+
+
 class ImageOperationsWithAutoWebPTestCase(BaseImagingTestCase):
     def get_context(self):
         cfg = Config(SECURITY_KEY='ACME-SEC')
@@ -420,14 +552,6 @@ class ImageOperationsWithAutoWebPTestCase(BaseImagingTestCase):
         expect(response.headers['Vary']).to_include('Accept')
 
         expect(response.body).to_be_webp()
-
-    def test_should_bad_request_if_bigger_than_75_megapixels(self):
-        response = self.get_as_webp('/unsafe/16384x16384.png')
-        expect(response.code).to_equal(400)
-
-    def test_should_bad_request_if_bigger_than_75_megapixels_jpeg(self):
-        response = self.get_as_webp('/unsafe/9643x10328.jpg')
-        expect(response.code).to_equal(400)
 
     def test_should_not_convert_animated_gifs_to_webp(self):
         response = self.get_as_webp('/unsafe/animated.gif')
@@ -550,7 +674,6 @@ class ImageOperationsWithAutoWebPWithResultStorageTestCase(BaseImagingTestCase):
         expect(response.headers).to_include('Vary')
         expect(response.headers['Vary']).to_include('Accept')
         expect(response.body).to_be_webp()
-        expect(self.context.request.engine.extension).to_equal('.webp')
 
 
 class ImageOperationsWithoutEtagsTestCase(BaseImagingTestCase):
@@ -665,13 +788,11 @@ class ImageOperationsWithGifVTestCase(BaseImagingTestCase):
         expect(response.code).to_equal(200)
         expect(response.headers['Content-Type']).to_equal('video/webm')
 
-    def test_should_convert_animated_gif_to_video_and_force_even_dimensions(self):
-        response = self.fetch('/unsafe/meta/51x51/filters:gifv()/animated.gif')
+    def test_should_convert_animated_gif_to_mp4_with_filter_without_params(self):
+        response = self.fetch('/unsafe/filters:gifv(mp4):background_color(ff00ff)/animated.gif')
 
         expect(response.code).to_equal(200)
-        obj = loads(response.body)
-        expect(obj['thumbor']['target']['width']).to_equal(50)
-        expect(obj['thumbor']['target']['height']).to_equal(50)
+        expect(response.headers['Content-Type']).to_equal('video/mp4')
 
 
 class ImageOperationsImageCoverTestCase(BaseImagingTestCase):
@@ -942,6 +1063,7 @@ class EngineLoadException(BaseImagingTestCase):
     def get_context(self):
         cfg = Config(SECURITY_KEY='ACME-SEC')
         cfg.LOADER = "thumbor.loaders.file_loader"
+        cfg.STORAGE = "thumbor.storages.no_storage"
         cfg.FILE_LOADER_ROOT_PATH = self.loader_path
         cfg.FILTERS = []
 
@@ -951,11 +1073,10 @@ class EngineLoadException(BaseImagingTestCase):
         server.security_key = 'ACME-SEC'
         return Context(server, cfg, importer)
 
-    @unittest.skip("For some strange reason, this test breaks on Travis.")
-    def test_should_error_on_engine_load_exception(self):
-        with patch.object(Engine, 'load', side_effect=ValueError):
-            response = self.fetch('/unsafe/image.jpg')
-        expect(response.code).to_equal(504)
+    @patch.object(Engine, 'load', side_effect=ValueError)
+    def test_should_error_on_engine_load_exception(self, load_mock):
+        response = self.fetch('/unsafe/image.jpg')
+        expect(response.code).to_equal(500)
 
     def test_should_release_ioloop_on_error_on_engine_exception(self):
         response = self.fetch('/unsafe/fit-in/134x134/940x2.png')
@@ -1149,3 +1270,79 @@ class TranslateCoordinatesTestCase(TestCase):
 
     def test_should_translate_from_original_to_resized(self):
         expect(self.translate_crop_coordinates).to_equal(self.get_coords()['expected_crop'])
+
+
+class ImageBadRequestDecompressionBomb(TestCase):
+    @classmethod
+    def setUpClass(cls, *args, **kw):
+        cls.root_path = tempfile.mkdtemp()
+        cls.loader_path = abspath(join(dirname(__file__), '../fixtures/images/'))
+        cls.base_uri = "/image"
+
+    @classmethod
+    def tearDownClass(cls, *args, **kw):
+        shutil.rmtree(cls.root_path)
+
+    def get_as_webp(self, url):
+        return self.fetch(url, headers={
+            "Accept": 'image/webp,*/*;q=0.8'
+        })
+
+    def get_config(self):
+        cfg = Config(SECURITY_KEY='ACME-SEC')
+        cfg.LOADER = "thumbor.loaders.file_loader"
+        cfg.FILE_LOADER_ROOT_PATH = self.loader_path
+        cfg.STORAGE = "thumbor.storages.no_storage"
+        cfg.AUTO_WEBP = True
+        return cfg
+
+    def get_server(self):
+        server = ServerParameters(8889, 'localhost', 'thumbor.conf', None, 'info', None)
+        validate_config(self.config, server)
+        return server
+
+    def get_importer(self):
+        importer = Importer(self.config)
+        importer.import_modules()
+        return importer
+
+    def test_should_bad_request_if_bigger_than_75_megapixels(self):
+        response = self.get_as_webp('/unsafe/16384x16384.png')
+        expect(response.code).to_equal(400)
+
+    def test_should_bad_request_if_bigger_than_75_megapixels_jpeg(self):
+        response = self.get_as_webp('/unsafe/9643x10328.jpg')
+        expect(response.code).to_equal(400)
+
+
+class LoaderErrorTestCase(BaseImagingTestCase):
+    def get_context(self):
+        cfg = Config(SECURITY_KEY='ACME-SEC')
+        cfg.LOADER = "thumbor.loaders.file_loader"
+        cfg.FILE_LOADER_ROOT_PATH = self.loader_path
+        cfg.STORAGE = "thumbor.storages.file_storage"
+        cfg.FILE_STORAGE_ROOT_PATH = self.root_path
+
+        importer = Importer(cfg)
+        importer.import_modules()
+        server = ServerParameters(8889, 'localhost', 'thumbor.conf', None, 'info', None)
+        server.security_key = 'ACME-SEC'
+        return Context(server, cfg, importer)
+
+    def test_should_propagate_custom_loader_error(self):
+        old_load = self.context.modules.loader.load
+
+        @return_future
+        def load_override(context, path, callback):
+            result = LoaderResult()
+            result.successful = False
+            result.error = 409
+            callback(result)
+
+        self.context.modules.loader.load = load_override
+
+        response = self.fetch('/unsafe/image.jpg')
+
+        self.context.modules.loader.load = old_load
+
+        expect(response.code).to_equal(409)

@@ -5,17 +5,19 @@ run: compile_ext
 
 setup:
     ifeq ($(OS), xx)
-	    @$(MAKE) setup_mac
+	@$(MAKE) setup_mac
     else
-	    @echo
-	    @echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-	    @echo ">>> MAKE SURE SYSTEM DEPENDENCIES IS INSTALLED IF RUNNING TESTS <<<<<<<<<<<<<<<"
-	    @echo ">>> imagemagick webp opencv coreutils gifsicle libvpx exiftool cairo ffmpeg <<<"
-	    @echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-	    @echo
+	@$(MAKE) setup_ubuntu
     endif
-	@pip install -e .[tests]
+	@$(MAKE) setup_python
 
+setup_ubuntu:
+	@sudo apt-get install -y imagemagick webp coreutils gifsicle libvpx4 \
+                             libvpx-dev libimage-exiftool-perl libcairo2-dev \
+                             ffmpeg libcurl4-openssl-dev libffi-dev \
+                             python-dev python3-dev
+setup_python:
+	@pip install -e .[tests]
 
 setup_mac:
 	@brew tap homebrew/science
@@ -33,14 +35,14 @@ compile_ext:
 test: compile_ext redis
 	@$(MAKE) unit coverage
 	@$(MAKE) integration_run
-	@$(MAKE) static
+	@$(MAKE) flake
 	@$(MAKE) kill_redis
 
 ci_test: compile_ext
 	@echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
 	@echo "TORNADO IS `python -c 'import tornado; import inspect; print(inspect.getfile(tornado))'`"
 	@echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-	@if [ -z "$$INTEGRATION_TEST" ]; then $(MAKE) unit static coverage; else $(MAKE) integration_run; fi
+	@if [ "$$LINT_TEST" ]; then $(MAKE) flake; elif [ -z "$$INTEGRATION_TEST" ]; then $(MAKE) unit coverage; else $(MAKE) integration_run; fi
 
 integration_run:
 	@nosetests -sv integration_tests/
@@ -79,9 +81,6 @@ build_docs:
 
 docs: setup_docs build_docs
 	python -mwebbrowser file:///`pwd`/docs/_build/html/index.html
-
-static:
-	@flake8 --config=./flake8 .
 
 sample_images:
 	convert -delay 100 -size 100x100 gradient:blue gradient:red -loop 0 integration_tests/imgs/animated.gif
@@ -147,7 +146,9 @@ sample_images:
 	curl -s https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Coffee_beans_-_ziarna_kawy.jpg/513px-Coffee_beans_-_ziarna_kawy.jpg -o tests/fixtures/filters/513px-Coffee_beans_-_ziarna_kawy.jpg
 	curl -s https://upload.wikimedia.org/wikipedia/commons/archive/4/47/20161122122708%21PNG_transparency_demonstration_1.png | convert - -resize 300x225 tests/fixtures/filters/PNG_transparency_demonstration_1.png
 	convert tests/fixtures/filters/PNG_transparency_demonstration_1.png -background blue -flatten tests/fixtures/filters/PNG_transparency_demonstration_1_blue.png
+	convert tests/fixtures/filters/PNG_transparency_demonstration_1.png -dither None -colors 256 tests/fixtures/images/paletted-transparent.png
 	cp tests/fixtures/filters/source.jpg tests/fixtures/filters/800px-Katherine_Maher.jpg
 	cp tests/fixtures/images/Giunchedi%2C_Filippo_January_2015_01.jpg tests/fixtures/filters/Giunchedi%2C_Filippo_January_2015_01.jpg
+	cp tests/fixtures/filters/watermark.png tests/fixtures/images/watermark.png
 	# the watermark filter's logic is too complicated to reproduce with IM, the watermark test images can't be generated here
-	# similarly, the noise, colorize and fill filters generate output too unique to be reproduce with IM and can't be generated here
+	# similarly, the noise, colorize, redeye and fill filters generate output too unique to be reproduce with IM and can't be generated here
