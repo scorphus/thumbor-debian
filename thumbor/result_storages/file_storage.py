@@ -13,13 +13,13 @@ from uuid import uuid4
 from shutil import move
 import pytz
 
-from os.path import exists, dirname, join, getmtime, abspath
+from os.path import exists, dirname, join, getmtime, abspath, isdir
 
 from thumbor.engines import BaseEngine
 from thumbor.result_storages import BaseStorage
 from thumbor.utils import logger, deprecated
 from tornado.concurrent import return_future
-from urllib2 import unquote
+from six.moves.urllib.parse import unquote
 from . import ResultStorageResult
 
 
@@ -52,10 +52,10 @@ class Storage(BaseStorage):
         file_abspath = self.normalize_path(path)
         if not self.validate_path(file_abspath):
             logger.warn("[RESULT_STORAGE] unable to read from outside root path: %s" % file_abspath)
-            return None
+            return callback(None)
         logger.debug("[RESULT_STORAGE] getting from %s" % file_abspath)
 
-        if not exists(file_abspath) or self.is_expired(file_abspath):
+        if not exists(file_abspath) or isdir(file_abspath) or self.is_expired(file_abspath):
             logger.debug("[RESULT_STORAGE] image not found at %s" % file_abspath)
             callback(None)
         else:
@@ -65,9 +65,9 @@ class Storage(BaseStorage):
             result = ResultStorageResult(
                 buffer=buffer,
                 metadata={
-                    'LastModified':  datetime.fromtimestamp(getmtime(file_abspath)).replace(tzinfo=pytz.utc),
+                    'LastModified': datetime.fromtimestamp(getmtime(file_abspath)).replace(tzinfo=pytz.utc),
                     'ContentLength': len(buffer),
-                    'ContentType':   BaseEngine.get_mimetype(buffer)
+                    'ContentType': BaseEngine.get_mimetype(buffer)
                 }
             )
 
@@ -98,7 +98,7 @@ class Storage(BaseStorage):
             return False
 
         timediff = datetime.now() - datetime.fromtimestamp(getmtime(path))
-        return timediff.seconds > expire_in_seconds
+        return timediff.total_seconds() > expire_in_seconds
 
     @deprecated("Use result's last_modified instead")
     def last_updated(self):

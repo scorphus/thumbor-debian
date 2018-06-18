@@ -18,6 +18,7 @@ class JSONEngine(BaseEngine):
     def __init__(self, engine, path, callback_name=None):
         super(JSONEngine, self).__init__(engine.context)
         self.engine = engine
+        self.extension = engine.extension
         self.width, self.height = self.engine.size
         self.path = path
         self.callback_name = callback_name
@@ -97,6 +98,9 @@ class JSONEngine(BaseEngine):
     def enable_alpha(self):
         return self.engine.enable_alpha()
 
+    def strip_exif(self):
+        return self.engine.strip_exif()
+
     def strip_icc(self):
         return self.engine.strip_icc()
 
@@ -112,11 +116,19 @@ class JSONEngine(BaseEngine):
     def image_data_as_rgb(self, update_image=True):
         return self.engine.image_data_as_rgb(update_image)
 
-    def convert_to_grayscale(self):
+    def convert_to_grayscale(self, update_image=True, alpha=True):
         pass
 
     def get_frame_count(self):
         return self.engine.frame_count
+
+    def has_transparency(self):
+        return self.engine.has_transparency()
+
+    def can_auto_convert_png_to_jpg(self, *args, **kwargs):
+        can_convert = super(JSONEngine, self).can_auto_convert_png_to_jpg(args, kwargs)
+        if can_convert:
+            self.operations.append({'type': 'auto_png_to_jpg_conversion'})
 
     def read(self, extension, quality):
         target_width, target_height = self.get_target_dimensions()

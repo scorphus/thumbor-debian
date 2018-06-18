@@ -12,6 +12,7 @@ from __future__ import unicode_literals, absolute_import
 from struct import pack
 from os.path import abspath, join, dirname
 
+import piexif
 from unittest import TestCase
 from xml.etree.ElementTree import ParseError
 
@@ -27,7 +28,7 @@ STORAGE_PATH = abspath(join(dirname(__file__), '../fixtures/images/'))
 
 
 def exif_str(x):
-    return b'Exif\x00\x00II*\x00\x08\x00\x00\x00\x05\x00\x12\x01\x03\x00\x01\x00\x00\x00%s\x00\x00\x1a\x01\x05\x00\x01\x00\x00\x00J\x00\x00\x00\x1b\x01\x05\x00\x01\x00\x00\x00R\x00\x00\x00(\x01\x03\x00\x01\x00\x00\x00\x02\x00\x00\x00\x13\x02\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00H\x00\x00\x00\x01\x00\x00\x00H\x00\x00\x00\x01\x00\x00\x00' % pack('h', x)  # noqa
+    return b'Exif\x00\x00II*\x00\x08\x00\x00\x00\x05\x00\x12\x01\x03\x00\x01\x00\x00\x00%s\x00\x00\x1a\x01\x05\x00\x01\x00\x00\x00J\x00\x00\x00\x1b\x01\x05\x00\x01\x00\x00\x00R\x00\x00\x00(\x01\x03\x00\x01\x00\x00\x00\x02\x00\x00\x00\x13\x02\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00H\x00\x00\x00\x01\x00\x00\x00H\x00\x00\x00\x01\x00\x00\x00' % pack('<h', x)  # noqa
 
 
 class BaseEngineTestCase(TestCase):
@@ -194,6 +195,11 @@ class BaseEngineTestCase(TestCase):
 
     def test_get_orientation_null_exif(self):
         self.engine.exif = None
+        expect(self.engine.get_orientation()).to_be_null()
+
+    def test_get_orientation_without_orientation_in_exif(self):
+        self.engine.exif = piexif.load(exif_str(1))
+        self.engine.exif['0th'].pop(piexif.ImageIFD.Orientation, None)
         expect(self.engine.get_orientation()).to_be_null()
 
     def test_get_orientation(self):
