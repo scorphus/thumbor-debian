@@ -1,4 +1,4 @@
-thumbor (6.3.2-5) UNRELEASED; urgency=medium
+thumbor (6.5.1-1) UNRELEASED; urgency=medium
 
   [ Ondřej Nový ]
 
@@ -8,8 +8,11 @@ thumbor (6.3.2-5) UNRELEASED; urgency=medium
   [ Marcelo Jorge Vieira ]
 
   * d/watch: Changed repository from pypi to github
+  * Removed patches applied by upstream
+    * fix_convert_tif_to_png.patch
+    * fixed_reorientate_tests_for_big_endian_machines.patch
 
- -- Ondřej Nový <onovy@debian.org>  Tue, 13 Feb 2018 09:58:50 +0100
+ -- Marcelo Jorge Vieira <metal@debian.org>  Sun, 17 Jun 2018 23:31:22 -0300
 
 thumbor (6.3.2-4) unstable; urgency=medium
 

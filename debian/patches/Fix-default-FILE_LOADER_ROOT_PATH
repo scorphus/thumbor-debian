@@ -11,9 +11,9 @@ The home directory can't be guessed at that point, the thumbor user future home 
  import tempfile
  
  import derpconf.config as config
-@@ -16,7 +16,7 @@
- 
- from thumbor import __version__
+@@ -21,7 +21,7 @@
+ except NameError:
+     basestring = str  # Python 3
  
 -home = expanduser("~")
 +home = '/var/lib/thumbor'
