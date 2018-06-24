@@ -7,6 +7,7 @@ thumbor (6.5.1-1) UNRELEASED; urgency=medium
 
   [ Marcelo Jorge Vieira ]
 
+  * New Upstream release (Closes: #891612)
   * d/watch: Changed repository from pypi to github
   * Removed patches applied by upstream
     * fix_convert_tif_to_png.patch
