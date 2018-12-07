@@ -1,4 +1,4 @@
-thumbor (6.5.1-1) UNRELEASED; urgency=medium
+thumbor (6.5.1-1) unstable; urgency=medium
 
   [ Ondřej Nový ]
 
@@ -14,7 +14,7 @@ thumbor (6.5.1-1) UNRELEASED; urgency=medium
     * fixed_reorientate_tests_for_big_endian_machines.patch
   * Replaced 'python-pexif' with 'python-piexif'
 
- -- Marcelo Jorge Vieira <metal@debian.org>  Sun, 17 Jun 2018 23:31:22 -0300
+ -- Marcelo Jorge Vieira <metal@debian.org>  Thu, 06 Dec 2018 22:09:22 -0200
 
 thumbor (6.3.2-4) unstable; urgency=medium
 
