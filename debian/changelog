@@ -1,3 +1,10 @@
+thumbor (6.5.1-4) unstable; urgency=high
+
+  * dependency python-imaging is does-not-exist (Closes: #891612)
+  * test failure in test_redeye_applied (numpy >= 1.16.0) (Closes: #918395)
+
+ -- Marcelo Jorge Vieira <metal@debian.org>  Wed, 13 Feb 2019 00:14:29 -0200
+
 thumbor (6.5.1-3) unstable; urgency=medium
 
   * d/control: Wrap and sort
