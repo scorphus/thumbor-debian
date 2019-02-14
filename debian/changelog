@@ -1,3 +1,9 @@
+thumbor (6.5.1-5) unstable; urgency=high
+
+  * Fixed missing PyCryptodome dependency (Closes: #918785)
+
+ -- Marcelo Jorge Vieira <metal@debian.org>  Wed, 13 Feb 2019 23:58:59 -0200
+
 thumbor (6.5.1-4) unstable; urgency=high
 
   * dependency python-imaging is does-not-exist (Closes: #891612)
