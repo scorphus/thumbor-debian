@@ -1,0 +1,22 @@
+--- a/setup.py
++++ b/setup.py
+@@ -96,7 +96,7 @@
+ 
+         install_requires=[
+             "tornado>=4.1.0,<6.0.0",
+-            "pycryptodome >= 3.4.7",
++            "pycryptodomex >= 3.4.7",
+             "pycurl>=7.19.0,<7.44.0",
+             "Pillow>=4.3.0,<5.2.0",
+             "derpconf>=0.2.0",
+--- a/thumbor/crypto.py
++++ b/thumbor/crypto.py
+@@ -11,7 +11,7 @@
+ import base64
+ import hashlib
+ 
+-from Crypto.Cipher import AES
++from Cryptodome.Cipher import AES
+ 
+ # Import the Signer class to support backward-compatibility
+ # and existing documentation
