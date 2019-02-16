@@ -1,3 +1,9 @@
+thumbor (6.5.1-6) unstable; urgency=high
+
+  * Really fixed PyCryptodome dependency (Thanks Florian REY)
+
+ -- Marcelo Jorge Vieira <metal@debian.org>  Sat, 16 Feb 2019 00:49:44 -0200
+
 thumbor (6.5.1-5) unstable; urgency=high
 
   * Fixed missing PyCryptodome dependency (Closes: #918785)
