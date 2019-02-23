@@ -1,3 +1,9 @@
+thumbor (6.5.1-7) unstable; urgency=high
+
+  * d/control: Fixed build-deps
+
+ -- Marcelo Jorge Vieira <metal@debian.org>  Sat, 23 Feb 2019 11:30:36 -0300
+
 thumbor (6.5.1-6) unstable; urgency=high
 
   * Really fixed PyCryptodome dependency (Thanks Florian REY)
