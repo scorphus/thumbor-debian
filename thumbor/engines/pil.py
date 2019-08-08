@@ -8,6 +8,7 @@
 # http://www.opensource.org/licenses/mit-license
 # Copyright (c) 2011 globo.com thumbor@googlegroups.com
 
+from __future__ import absolute_import
 
 import os
 from tempfile import mkstemp
@@ -325,9 +326,12 @@ class Engine(BaseEngine):
 
     def image_data_as_rgb(self, update_image=True):
         converted_image = self.image
-        if converted_image.mode not in ['RGB', 'RGBA', 'P']:
+        if converted_image.mode not in ['RGB', 'RGBA']:
             if 'A' in converted_image.mode:
                 converted_image = converted_image.convert('RGBA')
+            elif converted_image.mode == 'P':
+                # convert() figures out RGB or RGBA based on palette used
+                converted_image = converted_image.convert(None)
             else:
                 converted_image = converted_image.convert('RGB')
         if update_image:
