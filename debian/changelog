@@ -1,3 +1,12 @@
+thumbor (6.7.0-1) unstable; urgency=medium
+
+  * New upstream version 6.7.0
+  * Remove patches applied upstream:
+    * fix_pycryptodomex_dependency.diff
+    * longs_are_not_supported_for_this_option.diff
+
+ -- Marcelo Jorge Vieira <metal@debian.org>  Wed, 07 Aug 2019 22:40:35 -0300
+
 thumbor (6.5.1-7) unstable; urgency=high
 
   * d/control: Fixed build-deps
