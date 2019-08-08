@@ -8,7 +8,7 @@
 # http://www.opensource.org/licenses/mit-license
 # Copyright (c) 2011 globo.com thumbor@googlegroups.com
 
-from os.path import expanduser, join
+from os.path import join
 import tempfile
 
 import derpconf.config as config
@@ -21,7 +21,7 @@ try:
 except NameError:
     basestring = str  # Python 3
 
-home = expanduser("~")
+home = '/var/lib/thumbor'
 
 Config.define('THUMBOR_LOG_CONFIG', None, 'Logging configuration as json', 'Logging')
 Config.define(

@@ -1,4 +1,3 @@
 test_redeye_applied.diff
 Fix-default-FILE_LOADER_ROOT_PATH
-longs_are_not_supported_for_this_option.diff
 fix_pycryptodomex_dependency.diff
