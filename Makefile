@@ -4,7 +4,7 @@ run: compile_ext
 	@thumbor -l debug -d
 
 setup:
-    ifeq ($(OS), xx)
+    ifeq ($(OS), Darwin)
 	@$(MAKE) setup_mac
     else
 	@$(MAKE) setup_ubuntu
@@ -12,7 +12,7 @@ setup:
 	@$(MAKE) setup_python
 
 setup_ubuntu:
-	@sudo apt-get install -y imagemagick webp coreutils gifsicle libvpx4 \
+	@sudo apt-get install -y imagemagick webp coreutils gifsicle libvpx? \
                              libvpx-dev libimage-exiftool-perl libcairo2-dev \
                              ffmpeg libcurl4-openssl-dev libffi-dev \
                              python-dev python3-dev
@@ -20,7 +20,7 @@ setup_python:
 	@pip install -e .[tests]
 
 setup_mac:
-	@brew tap homebrew/science
+	@brew tap brewsci/science
 	@brew update
 	@brew install imagemagick webp opencv coreutils gifsicle libvpx exiftool cairo
 	@brew install ffmpeg --with-libvpx
@@ -71,7 +71,7 @@ redis: kill_redis
 	@redis-cli -p 6668 -a hey_you info
 
 flake:
-	@flake8 . --ignore=W801,E501
+	@flake8 . --ignore=W801,E501,W605,W504,W606
 
 setup_docs:
 	pip install -r docs/requirements.txt

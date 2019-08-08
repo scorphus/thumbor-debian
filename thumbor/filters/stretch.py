@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # thumbor imaging service
@@ -7,7 +6,13 @@
 # Licensed under the MIT license:
 # http://www.opensource.org/licenses/mit-license
 # Copyright (c) 2011 globo.com thumbor@googlegroups.com
-'''This is the main module in thumbor'''
 
-__version__ = "6.7.0"
-__release_date__ = "17-Jan-2019"
+from thumbor.filters import BaseFilter, filter_method, PHASE_PRE_LOAD
+
+
+class Filter(BaseFilter):
+    phase = PHASE_PRE_LOAD
+
+    @filter_method()
+    def stretch(self):
+        self.context.request.stretch = True

@@ -304,7 +304,15 @@ class BaseHandler(tornado.web.RequestHandler):
         return frames > 1
 
     def can_auto_convert_png_to_jpg(self):
-        return self.context.request.engine.can_auto_convert_png_to_jpg()
+        request_override = self.context.request.auto_png_to_jpg
+        config = self.context.config
+
+        enabled = (config.AUTO_PNG_TO_JPG and request_override is None) or request_override
+
+        if enabled:
+            return self.context.request.engine.can_auto_convert_png_to_jpg()
+
+        return False
 
     def define_image_type(self, context, result):
         if result is not None:
@@ -507,8 +515,8 @@ class BaseHandler(tornado.web.RequestHandler):
             results = engine.read(extension, quality)
 
         prev_result = results
-        while len(results) <= max_bytes:
-            quality = int(quality * 1.1)
+        while len(results) <= max_bytes and quality < initial_quality:
+            quality = max(initial_quality, int(quality * 1.1))
             logger.debug('Trying to upsize image with quality of %d...' % quality)
             prev_result = results
             results = engine.read(extension, quality)

@@ -148,6 +148,8 @@ Config.define('ENABLE_ETAGS', True, 'Enables automatically generated etags', 'HT
 Config.define('MAX_ID_LENGTH', 32, 'Set maximum id length for images when stored', 'Storage')
 Config.define('GC_INTERVAL', None, 'Set garbage collection interval in seconds', 'Performance')
 
+Config.define('HEALTHCHECK_ROUTE', r'/healthcheck', 'Healthcheck route.', 'Healthcheck')
+
 # METRICS OPTIONS
 Config.define('STATSD_HOST', None, 'Host to send statsd instrumentation to', 'Metrics')
 Config.define('STATSD_PORT', 8125, 'Port to send statsd instrumentation to', 'Metrics')
@@ -309,6 +311,13 @@ Config.define(
 )
 
 Config.define(
+    'JPEGTRAN_SCANS_FILE',
+    '',
+    'Path for the progressive scans file to use with jpegtran optimizer. Implies progressive jpeg output',
+    'Optimizers'
+)
+
+Config.define(
     'FFMPEG_PATH',
     '/usr/local/bin/ffmpeg',
     'Path for the ffmpeg binary used to generate gifv(h.264)',
@@ -346,6 +355,8 @@ Config.define(
         'thumbor.filters.curve',
         'thumbor.filters.background_color',
         'thumbor.filters.upscale',
+        'thumbor.filters.proportion',
+        'thumbor.filters.stretch',
     ],
     'List of filters that thumbor will allow to be used in generated images. All of them must be ' +
     'full names of python modules (python must be able to import it)', 'Filters')
@@ -397,6 +408,16 @@ Config.define(
     'The url signer thumbor should use to verify url signatures.' +
     'This must be the full name of a python module ' +
     '(python must be able to import it)', 'Extensibility'
+)
+
+# SERVER
+Config.define(
+    'MAX_WAIT_SECONDS_BEFORE_SERVER_SHUTDOWN', 0,
+    'The amount of time to wait before shutting down the server, i.e. stop accepting requests.', 'Server'
+)
+Config.define(
+    'MAX_WAIT_SECONDS_BEFORE_IO_SHUTDOWN', 0,
+    'The amount of time to waut before shutting down all io, after the server has been stopped', 'Server'
 )
 
 Config.define(
