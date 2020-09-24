@@ -41,8 +41,8 @@ Build-Depends: debhelper (>= 9.20160709),
                python-webcolors,
                redis-server
 Homepage: https://github.com/thumbor/thumbor
-Vcs-Git: https://salsa.debian.org/python-team/modules/thumbor.git
-Vcs-Browser: https://salsa.debian.org/python-team/modules/thumbor
+Vcs-Git: https://salsa.debian.org/python-team/packages/thumbor.git
+Vcs-Browser: https://salsa.debian.org/python-team/packages/thumbor
 
 Package: thumbor
 Architecture: any
