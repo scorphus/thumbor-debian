@@ -1,5 +1,5 @@
 Source: thumbor
-Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
+Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Gilles Dubuc <gilles@wikimedia.org>,
            Marcelo Jorge Vieira <metal@debian.org>
 Section: python
