@@ -4,7 +4,7 @@ Uploaders: Gilles Dubuc <gilles@wikimedia.org>,
            Marcelo Jorge Vieira <metal@debian.org>
 Section: python
 Priority: optional
-Standards-Version: 4.0.0
+Standards-Version: 4.5.1
 Build-Depends: debhelper-compat (= 12),
                dh-python,
                ffmpeg,
