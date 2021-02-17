@@ -1,4 +1,4 @@
-thumbor (6.7.1~git20210216.f5e64a2-1) UNRELEASED; urgency=medium
+thumbor (6.7.1~git20210216.f5e64a2-1) unstable; urgency=medium
 
   [ Ondřej Nový ]
   * d/control: Update Maintainer field with new Debian Python Team
