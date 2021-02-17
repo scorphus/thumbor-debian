@@ -1,4 +1,6 @@
 #!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 export PYBUILD_NAME=thumbor
 export PYBUILD_TEST_NOSE=1
 export PYBUILD_BEFORE_TEST=cp -R tests integration_tests {build_dir}; redis-server --port 6668 --requirepass hey_you > /dev/null &
