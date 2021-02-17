@@ -26,12 +26,12 @@ Files: thumbor/engines/extensions/pil.py
 Copyright: 2012 Almar Klein, Ant1, Marius van Voorden
 License: BSD-3-clause
 
-Files: tests/fixtures/filters/source.jpg
+Files: thumbor/fixtures/filters/source.jpg
 Copyright: Victor Grigas
 License: CC-BY-SA-3.0
 
-Files: tests/fixtures/filters/watermark.svg
-       tests/fixtures/filters/watermark.png
+Files: thumbor/fixtures/filters/watermark.svg
+       thumbor/fixtures/filters/watermark.png
 Copyright: Zachary "Zach" Harden
 License: public-domain
  This file is ineligible for copyright and therefore in the public domain
@@ -39,23 +39,23 @@ License: public-domain
  contains no original authorship.
  More info at: https://commons.wikimedia.org/wiki/File:Wikimedia-logo.svg
 
-Files: tests/fixtures/filters/800px-Guido-portrait-2014.jpg
+Files: thumbor/fixtures/filters/800px-Guido-portrait-2014.jpg
 Copyright: Daniel Stroud
 License: CC-BY-SA-4.0
 
-Files: tests/fixtures/filters/800px-Coffee_berries_1.jpg
+Files: thumbor/fixtures/filters/800px-Coffee_berries_1.jpg
 Copyright: Stanislaw Szydlo
 License: CC-BY-SA-3.0
 
-Files: tests/fixtures/filters/800px-A_small_cup_of_coffee.JPG
+Files: thumbor/fixtures/filters/800px-A_small_cup_of_coffee.JPG
 Copyright: Julius Schorzman
 License: CC-BY-SA-2.0
 
-Files: tests/fixtures/filters/513px-Coffee_beans_-_ziarna_kawy.jpg
+Files: thumbor/fixtures/filters/513px-Coffee_beans_-_ziarna_kawy.jpg
 Copyright: Alina Zienowicz (Ala z)
 License: CC-BY-SA-3.0
 
-Files: tests/fixtures/filters/PNG_transparency_demonstration_1.png
+Files: thumbor/fixtures/filters/PNG_transparency_demonstration_1.png
 Copyright: Ed g2s
 License: CC-BY-SA-3.0
 
