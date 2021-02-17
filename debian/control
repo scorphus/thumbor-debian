@@ -1,7 +1,8 @@
 Source: thumbor
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Gilles Dubuc <gilles@wikimedia.org>,
-           Marcelo Jorge Vieira <metal@debian.org>
+           Marcelo Jorge Vieira <metal@debian.org>,
+           Pablo Santiago Blum de Aguiar <scorphus@gmail.com>
 Section: python
 Priority: optional
 Standards-Version: 4.5.1
