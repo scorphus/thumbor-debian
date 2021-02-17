@@ -1,3 +1,8 @@
+Description: Recover removed setup.py
+Author: Pablo Santiago Blum de Aguiar <scorphus@gmail.com>
+Forwarded: not-needed
+Last-Update: 2021-02-17
+---
 Index: app/setup.py
 ===================================================================
 --- /dev/null
