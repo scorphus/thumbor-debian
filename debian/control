@@ -41,6 +41,7 @@ Build-Depends: debhelper-compat (= 12),
 Homepage: https://github.com/thumbor/thumbor
 Vcs-Git: https://salsa.debian.org/python-team/packages/thumbor.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/thumbor
+Rules-Requires-Root: no
 
 Package: thumbor
 Architecture: any
