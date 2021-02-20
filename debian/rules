@@ -17,7 +17,8 @@ export PYBUILD_TEST_ARGS=-s integration_tests/ tests/ \
 	--exclude=test_should_exec_other_operations_on_error_on_engine_exception
 export PYBUILD_AFTER_INSTALL=mkdir -p {destdir}/etc/thumbor.d; \
 	HOME=/var/lib/thumbor PYTHONPATH={destdir}/usr/lib/python{version}/dist-packages/ python{version} {destdir}/usr/bin/thumbor-config > {destdir}/etc/thumbor.d/10-default.conf; \
-	find {destdir}/usr/lib/python{version}/dist-packages/ -name '*.c' -delete
+	find {destdir}/usr/lib/python{version}/dist-packages/ -name '*.c' -delete; \
+	rm -rf '{destdir}/{install_dir}/thumbor/fixtures'
 export LC_ALL=C.UTF-8
 export ASYNC_TEST_TIMEOUT=30
 
