@@ -4,64 +4,47 @@ run: compile_ext
 	@thumbor -l debug -d
 
 setup:
-    ifeq ($(OS), Darwin)
-	@$(MAKE) setup_mac
-    else
-	@$(MAKE) setup_ubuntu
-    endif
-	@$(MAKE) setup_python
+	@poetry install
 
-setup_ubuntu:
-	@sudo apt-get install -y imagemagick webp coreutils gifsicle libvpx? \
-                             libvpx-dev libimage-exiftool-perl libcairo2-dev \
-                             ffmpeg libcurl4-openssl-dev libffi-dev \
-                             python-dev python3-dev
-setup_python:
-	@pip install -e .[tests]
+# Leaving this for future reference of committers.
+# setup_ubuntu:
+	# @sudo apt-get install -y imagemagick webp coreutils gifsicle libvpx? \
+                             # libvpx-dev libimage-exiftool-perl libcairo2-dev \
+                             # ffmpeg libcurl4-openssl-dev libffi-dev \
+                             # python-dev python3-dev
+# setup_mac:
+	# @brew tap brewsci/science
+	# @brew update
+	# @brew install imagemagick webp opencv coreutils gifsicle libvpx exiftool cairo
+	# @brew install ffmpeg --with-libvpx
+	# @opencv_path=`realpath $$(dirname $$(brew --prefix opencv))/$$(readlink $$(brew --prefix opencv))`; \
+		# echo 'Enter in your site-packages directory and run the following lines:';\
+		# echo "ln -s $$opencv_path/lib/python2.7/site-packages/cv.py ./";\
+		# echo "ln -s $$opencv_path/lib/python2.7/site-packages/cv2.so ./"
 
-setup_mac:
-	@brew tap brewsci/science
-	@brew update
-	@brew install imagemagick webp opencv coreutils gifsicle libvpx exiftool cairo
-	@brew install ffmpeg --with-libvpx
-	@opencv_path=`realpath $$(dirname $$(brew --prefix opencv))/$$(readlink $$(brew --prefix opencv))`; \
-		echo 'Enter in your site-packages directory and run the following lines:';\
-		echo "ln -s $$opencv_path/lib/python2.7/site-packages/cv.py ./";\
-		echo "ln -s $$opencv_path/lib/python2.7/site-packages/cv2.so ./"
+compile_ext build:
+	@poetry build
 
-compile_ext:
-	@python setup.py build_ext -i
-
-test: compile_ext redis
+test: build redis
 	@$(MAKE) unit coverage
 	@$(MAKE) integration_run
 	@$(MAKE) flake
 	@$(MAKE) kill_redis
 
-ci_test: compile_ext
+ci_test: build 
 	@echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
 	@echo "TORNADO IS `python -c 'import tornado; import inspect; print(inspect.getfile(tornado))'`"
 	@echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
 	@if [ "$$LINT_TEST" ]; then $(MAKE) flake; elif [ -z "$$INTEGRATION_TEST" ]; then $(MAKE) unit coverage; else $(MAKE) integration_run; fi
 
 integration_run:
-	@nosetests -sv integration_tests/
+	@poetry run pytest -sv integration_tests/ -p no:tldr
 
 coverage:
 	@coverage report -m --fail-under=10
 
 unit:
-	@coverage run --branch `which nosetests` -v --with-yanc -s tests/
-
-unit-parallel:
-	@`which nosetests` -v --with-yanc --processes=4 -s tests/
-
-focus:
-	@coverage run --branch `which nosetests` -vv --with-yanc --logging-level=WARNING --with-focus -i -s tests/
-
-
-mysql_test: pretest
-	PYTHONPATH=.:$$PYTHONPATH nosetests -v -s --with-coverage --cover-erase --cover-package=thumbor tests/test_mysql_storage.py
+	@pytest -n `nproc` --cov=thumbor tests/
 
 kill_redis:
 	@-redis-cli -p 6668 -a hey_you shutdown
@@ -71,7 +54,10 @@ redis: kill_redis
 	@redis-cli -p 6668 -a hey_you info
 
 flake:
-	@flake8 . --ignore=W801,E501,W605,W504,W606
+	@poetry run flake8 --config flake8
+
+pylint:
+	@poetry run pylint thumbor tests
 
 setup_docs:
 	pip install -r docs/requirements.txt
@@ -127,6 +113,7 @@ sample_images:
 	cp tests/fixtures/images/image.jpg tests/fixtures/images/maracujá.jpg
 	cp tests/fixtures/images/image.jpg tests/fixtures/images/alabama1_ap620%C3%A9.jpg
 	cp tests/fixtures/images/image.jpg tests/fixtures/images/alabama1_ap620é.jpg
+	mkdir -p tests/fixtures/result_storages/v2/im/ag/
 	cp tests/fixtures/images/image.jpg tests/fixtures/result_storages/v2/im/ag/image.jpg
 	curl -s https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Katherine_Maher.jpg/800px-Katherine_Maher.jpg -o tests/fixtures/filters/source.jpg
 	convert tests/fixtures/filters/source.jpg -quality 10 tests/fixtures/filters/quality-10%.jpg
