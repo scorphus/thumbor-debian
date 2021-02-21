@@ -8,8 +8,8 @@ If you use thumbor, please take 1 minute and answer [this survey](http://t.co/qP
 [![Coverage Status](https://coveralls.io/repos/thumbor/thumbor/badge.svg?branch=master&service=github)](https://coveralls.io/github/thumbor/thumbor?branch=master)
 [![Code Climate](https://codeclimate.com/github/thumbor/thumbor/badges/gpa.svg)](https://codeclimate.com/github/thumbor/thumbor)
 [![Codacy Badge](https://api.codacy.com/project/badge/373e13c719c0417f84f0d7d363c9d539)](https://www.codacy.com/app/heynemann/thumbor)
-[![Issue Stats](http://issuestats.com/github/thumbor/thumbor/badge/pr)](http://issuestats.com/github/thumbor/thumbor)
-[![Issue Stats](http://issuestats.com/github/thumbor/thumbor/badge/issue)](http://issuestats.com/github/thumbor/thumbor) 
+[![Shields](https://img.shields.io/github/issues-pr-raw/thumbor/thumbor.svg)](https://github.com/thumbor/thumbor/pulls)
+[![Shields](https://img.shields.io/github/issues-raw/thumbor/thumbor.svg)](https://github.com/thumbor/thumbor/issues)
 [![PyPI](https://img.shields.io/pypi/v/thumbor.svg)](https://pypi.python.org/pypi/thumbor)
 [![PyPI](https://img.shields.io/pypi/dm/thumbor.svg)](https://pypi.python.org/pypi/thumbor)
 [![Bountysource](https://www.bountysource.com/badge/tracker?tracker_id=257692)](https://www.bountysource.com/trackers/257692-globocom-thumbor?utm_source=257692&utm_medium=shield&utm_campaign=TRACKER_BADGE)
@@ -21,7 +21,7 @@ It also features a VERY smart detection of important points in the image for bet
 Using thumbor is very easy (after it is running). All you have to do is access it using an URL for an image, like this:
 
 ```
-http://<thumbor-server>/300x200/smart/s.glbimg.com/et/bb/f/original/2011/03/24/VN0JiwzmOw0b0lg.jpg
+http://<thumbor-server>/300x200/smart/thumbor.readthedocs.io/en/latest/_images/logo-thumbor.png
 ```
 
 That URL would show an image of the big brother brasil participants in 300x200 using smart crop.
