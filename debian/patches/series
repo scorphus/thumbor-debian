@@ -1,3 +1,4 @@
 recover-setup.py.diff
 MANIFEST-with-webp.diff
 Fix-default-FILE_LOADER_ROOT_PATH
+ffmpeg-libvpx-vp9.patch
